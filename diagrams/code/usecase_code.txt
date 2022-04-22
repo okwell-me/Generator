@@ -1,0 +1,11 @@
+@startuml
+
+left to right direction
+
+:Engine: as eng
+
+eng --> (find the clouds)
+eng --> (get the time of clouds arrival)
+eng --> (turn generator on)
+eng --> (turn generator off)
+@enduml
