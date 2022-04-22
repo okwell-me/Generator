@@ -1,0 +1,16 @@
+@startuml
+
+title Automatic generator
+
+System -> Engine : Find the cloud
+Engine -> System : Cloud was found
+
+System -> Engine : Get the time of clouds arrival
+Engine -> System : Time has got
+
+System -> Engine : Activate generator
+Engine -> System : Generator was activated
+
+System -> Engine : Disable the generator
+Engine -> System : Generator was disabled
+@enduml

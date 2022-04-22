@@ -1,0 +1,18 @@
+@startuml
+[*] --> Off
+Off --> CloudTracking : turn_on
+CloudTracking --> Off : turn_off
+
+CloudTracking --> sunIsClear : No clouds
+CloudTracking --> sunIsClosing : Clouds will \nclose the sun
+
+sunIsClosing --> engineOn : turn_eng_on
+
+sunIsClear --> engineOff : turn_eng_off
+
+CloudTracking --> Error : system_not_started
+engineOn --> Error : engine_not_started
+engineOff --> Error : engine_not_ended
+
+Error --> Off : reboot
+@enduml
