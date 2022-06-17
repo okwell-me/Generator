@@ -1,11 +1,14 @@
 ﻿#include<iostream>
 #include<string>
+
+#pragma comment(lib, "ws2_32.lib")
+#include <winsock2.h>
 #include<Windows.h>
-
-
+#pragma warning(disable: 4996)
 
 //#define AUTO
 #define MANUAL
+
 using namespace std;
 
 enum class SysState {
@@ -33,10 +36,69 @@ public:
 	}
 };
 
+class Server{
+public:
+	WSAData wsaData;
+	WORD DLLVersion = MAKEWORD(2, 1);
+	
+	SOCKET clientSock;
+	SOCKADDR_IN addr;
+	int sizeofaddr;
+	int retVal = 0;
+	char data[10];
+
+	Server() {
+		WSAStartup(DLLVersion, &wsaData);
+		clientSock = socket(AF_INET, SOCK_STREAM, 0);
+		addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+		addr.sin_port = htons(1111);
+		addr.sin_family = AF_INET;
+		sizeofaddr = sizeof(addr);
+	}
+	
+	~Server() {
+		closesocket(clientSock);
+		WSACleanup();
+	}
+
+	void connectToServer() {
+		cout << "Connecting to server...";
+		while (connect(clientSock, (SOCKADDR*)&addr, sizeofaddr) < 0) {
+			cout << " .";
+			Sleep(500);
+		}
+		cout << "\nConnected!\n";
+	}
+
+	int sendToServer(char* msg) {
+		cout << msg <<"\n";
+		return send(clientSock, msg, sizeof(msg), 0);
+	}
+
+	int recieveFromServer() {
+		return recv(clientSock, data, 10, 0);
+	}
+};
+
+class NetCommandStrategy : public CommandStrategy {
+public:
+	Server* server;
+
+	NetCommandStrategy() {
+		server->connectToServer();
+	}
+
+	virtual string getCommand() const override {
+		server->recieveFromServer();
+		string cmd(server->data);
+		return cmd;
+	}
+};
+
 class System {
 public:
-	SysState state;
-	GenState genstate;
+	SysState state = SysState::FindCloud;
+	GenState genstate = GenState::GenOff;
 	int parseCmd(const string& command);
 	void processEvent(GenState& genstate);
 	void processEvent(int command, SysState& systate, GenState& genstate);
@@ -44,14 +106,16 @@ public:
 	void EnableGenerator(GenState& genstate);
 	void DisableGenerator(GenState& genstate);
 	CommandStrategy* strat;
-	System(CommandStrategy* strat) {}
+	System(CommandStrategy* strat) {
+
+	}
+
 	~System() {
 		delete strat;
 	}
+	
 	string getCommand() {
-		string cmd;
-		cin >> cmd;
-		return cmd;
+		return strat->getCommand();
 	}
 };
 
@@ -147,9 +211,7 @@ int System::parseCmd(const string& command) {
 
 int main() {
 	srand(time(NULL));
-	System system(new ConsoleCommandStrategy());
-	system.state = SysState::FindCloud;
-	system.genstate = GenState::GenOff;
+	System system(new NetCommandStrategy());
 
 	while (system.state != SysState::SysOff) {
 #ifdef MANUAL
